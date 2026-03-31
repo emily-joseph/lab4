@@ -18,7 +18,7 @@
 /* TODO 1 */
 Node *create_question_node(const char *question) {
     Node *q = (Node*)malloc(sizeof(Node));
-    q->text = question;
+    q->text = strdup(question);
     q->isQuestion = 1;
     q->yes = NULL;
     q->no = NULL;
@@ -28,7 +28,7 @@ Node *create_question_node(const char *question) {
 /* TODO 2 */
 Node *create_solution_node(const char *solution) {
     Node *s = (Node*)malloc(sizeof(Node));
-    s->text = solution;
+    s->text = strdup(solution);
     s->isQuestion = 0;
     s->yes = NULL;
     s->no = NULL;
@@ -56,6 +56,7 @@ int count_nodes(Node *root) {
 
 /* TODO 5 */
 void fs_init(FrameStack *s) {
+
 }
 
 /* TODO 6 */
