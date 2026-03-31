@@ -110,7 +110,7 @@ void show_message(const char *msg, int is_error) {
  * --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
 static void initialize_tree(void) {
 
-    /* UNCOMMENT AFTER IMPLEMENTING TODOs 1-2:
+    //UNCOMMENT AFTER IMPLEMENTING TODOs 1-2:
 
     h_init(&g_index, 31);
 
@@ -121,8 +121,6 @@ static void initialize_tree(void) {
     root->no    = create_solution_node(
                       "Restart your computer and try again.");
     g_root = root;
-
-    */
 }
 
 /* ------ find path helper --------------------------------------------------------------------------------------------------------------------------- */
