@@ -56,26 +56,52 @@ int count_nodes(Node *root) {
 
 /* TODO 5 */
 void fs_init(FrameStack *s) {
-
+    s->size = 0;
+    s->capacity = 1;
+    Frame* temp = malloc(sizeof(Frame) * (s->capacity));
+    if (temp == NULL) {
+        return;
+    }
+    s->frames = temp;
 }
 
 /* TODO 6 */
 void fs_push(FrameStack *s, Node *node, int answeredYes) {
+    if (s->capacity <= s->size){
+        s->capacity = (s->capacity)*2;
+        Frame* temp = realloc(s->frames, sizeof(Frame)*(s->capacity));
+        if (s->frames == NULL) {
+            return;
+        }
+        s->frames = temp;
+    }
+
+    s->frames[s->size].node = node;
+    s->frames[s->size].answeredYes = answeredYes;
+    s->size = s->size + 1;
 }
 
 /* TODO 7 */
 Frame fs_pop(FrameStack *s) {
-    Frame dummy = {NULL, -1};
+    //if (s->size == 0) {
+    //    return NULL;
+    //}
+    Frame dummy = s->frames[(s->size) - 1];
+    s->size = s->size - 1;
     return dummy;
 }
 
 /* TODO 8 */
 int fs_empty(FrameStack *s) {
-    return 1;
+    return (s->size == 0);
 }
 
 /* TODO 9 */
 void fs_free(FrameStack *s) {
+    free(s->frames);
+    s->size = 0;
+    s->capacity = 0;
+    s->frames = NULL;
 }
 
 
@@ -83,25 +109,45 @@ void fs_free(FrameStack *s) {
 
 /* TODO 10 */
 void es_init(EditStack *s) {
+    s->size = 0;
+    s->capacity = 1;
+    Edit* temp = malloc(sizeof(Edit) * (s->capacity));
+    if (temp == NULL) {
+        return;
+    }
+    s->edits = temp;
 }
 
 /* TODO 11 */
 void es_push(EditStack *s, Edit e) {
+    if (s->capacity <= s->size){
+        s->capacity = (s->capacity)*2;
+        Frame* temp = realloc(s->edits, sizeof(Edit)*(s->capacity));
+        if (s->edits == NULL) {
+            return;
+        }
+        s->edits = temp;
+    }
+
+    s->edits[s->size] = e;
+    s->size = s->size + 1;
 }
 
 /* TODO 12 */
 Edit es_pop(EditStack *s) {
-    Edit dummy = {0};
+    Edit dummy = s->edits[s->size - 1];
+    s->size = s->size - 1;
     return dummy;
 }
 
 /* TODO 13 */
 int es_empty(EditStack *s) {
-    return 1;
+    return (s->size == 0);
 }
 
 /* TODO 14 */
 void es_clear(EditStack *s) {
+    s->size = 0;
 }
 
 /* provided -- do not modify */
@@ -119,24 +165,66 @@ void free_edit_stack(EditStack *s) { es_free(s); }
 
 /* TODO 15 */
 void q_init(Queue *q) {
+    q->size = 0;
+    q->front = NULL;
+    q->rear = NULL;
 }
 
 /* TODO 16 */
 void q_enqueue(Queue *q, Node *node, int id) {
+    QueueNode* temp = malloc(sizeof(QueueNode));
+    if(temp == NULL) {
+        return;
+    }
+    temp->treeNode = node;
+    temp->id = id;
+    temp->next = NULL;
+
+    if(q->front == NULL) {
+        q->front = temp;
+        q->rear = temp;
+    } else {
+        q->rear->next = temp;
+        q->rear = temp;
+    }
+    q->size = q->size + 1;
 }
 
 /* TODO 17 */
 int q_dequeue(Queue *q, Node **node, int *id) {
-    return 0;
+    if (q->size == 0) {
+        return 0;
+    }
+    QueueNode* dummy = q->front;
+    *node = dummy->treeNode;
+    *id = dummy->id;
+    q->front = dummy->next;
+    if (q->front == NULL) {
+        q->rear = NULL;
+    }
+
+    free(dummy);
+    q->size = q->size - 1;
+    return 1;
 }
 
 /* TODO 18 */
 int q_empty(Queue *q) {
-    return 1;
+    return (q->size == 0);
 }
 
 /* TODO 19 */
 void q_free(Queue *q) {
+    QueueNode* curr = q->front;
+    while (curr != NULL) {
+        QueueNode* temp = curr->next;
+        free(curr);
+        curr = temp;
+    }
+    q->front = NULL;
+    q->rear = NULL;
+    q->size = 0;
+
 }
 
 
