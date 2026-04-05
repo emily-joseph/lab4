@@ -122,7 +122,7 @@ void es_init(EditStack *s) {
 void es_push(EditStack *s, Edit e) {
     if (s->capacity <= s->size){
         s->capacity = (s->capacity)*2;
-        Frame* temp = realloc(s->edits, sizeof(Edit)*(s->capacity));
+        Edit* temp = realloc(s->edits, sizeof(Edit)*(s->capacity));
         if (s->edits == NULL) {
             return;
         }
@@ -237,36 +237,212 @@ void q_free(Queue *q) {
  *   anything else -> drop
  * Caller owns the returned string and must free() it.
  */
+
 char *canonicalize(const char *s) {
     if (s == NULL) return strdup("");
-    return NULL;
+
+    uint32_t len = strlen(s);
+    char *str = calloc(len + 1, sizeof(char));
+
+    if (str == NULL) {
+        return NULL;
+    }
+
+    uint32_t pos = 0;
+
+    for (uint32_t i = 0; i < len; i++) {
+        if(isalpha(s[i])){
+            str[pos] = tolower(s[i]);
+            pos++;
+        }
+        if(s[i] == ' ') {
+            str[pos] = '_';
+            pos++;
+        }
+    }
+
+    return str;
 }
 
 /* TODO 21  (djb2: hash = hash*33 + c, seed 5381) */
 unsigned h_hash(const char *s) {
-    return 0;
+    unsigned hash = 5381;
+    while (*s) {
+        hash = hash * 33 + (unsigned char)(*s);
+        s++;
+    }
+    return hash;
 }
 
 /* TODO 22 */
 void h_init(Hash *h, int nbuckets) {
+    if(h == NULL) {
+        return;
+    }
+    h->nbuckets = nbuckets;
+    h->size = 0;
+    Entry** d = calloc(nbuckets, sizeof(Entry *));
+    if (d == NULL) {
+        h->nbuckets = 0;
+        return;
+    }
+    h->buckets = d;
 }
 
 /* TODO 23 */
 int h_put(Hash *h, const char *key, int solutionId) {
-    return 0;
+    if (h == NULL || key == NULL || h->buckets == NULL || h->nbuckets <= 0) {
+        return 0;
+    }
+
+    unsigned hash = h_hash(key);
+    int bucket = hash % h->nbuckets;
+
+
+    if (h->buckets[bucket] == NULL){ //hasn't created bucket yet
+        Entry* new = malloc(sizeof(Entry));
+        if (new == NULL) {
+            return 0; //fails
+        }
+        new->key = strdup(key);
+        new->vals.capacity = 1;
+        new->vals.count = 1;
+        new->next = NULL;
+
+        int* pid = malloc(sizeof(int));
+        if (pid == NULL) {
+            free(new);
+            return 0; //fails
+        }
+        pid[0] = solutionId;
+        new->vals.ids = pid;
+        h->buckets[bucket] = new;
+        h->size++;
+        return 1; //success
+    }
+
+    Entry* current = h->buckets[bucket];
+    Entry* prev = NULL;
+    while (current != NULL) {
+        prev = current;
+        if (strcmp(current->key, key) == 0) { //if two values of the same key
+            if (current->vals.count >= current->vals.capacity) {
+                current->vals.capacity *= 2;
+                int* temp = realloc(current->vals.ids, current->vals.capacity*sizeof(int));
+                if (temp == NULL) {
+                    return 0; //fail
+                }
+                current->vals.ids = temp;
+                current->vals.ids[current->vals.count] = solutionId;
+                current->vals.count++;
+                return 1; //pass
+            }
+        }
+        current = current->next;
+    }
+    //previous holds the last valid entry -> now case of same bucket, but different key
+    Entry* new = malloc(sizeof(Entry));
+    if (new == NULL) {
+        return 0; //fail
+    }
+    new->key = strdup(key);
+    new->next = NULL;
+    new->vals.count = 1;
+    new->vals.capacity = 1;
+    int* nids = malloc(sizeof(int));
+    if (nids == NULL) {
+        return 0; //fail
+    }
+    nids[0] = solutionId;
+    new->vals.ids = nids;
+    prev->next = new;
+    h->size++;
+    return 1;
 }
 
 /* TODO 24 */
 int h_contains(const Hash *h, const char *key, int solutionId) {
+    if (h == NULL || key == NULL || h->buckets == NULL || h->nbuckets <= 0) {
+        return 0;
+    }
+
+    unsigned hash = h_hash(key);
+    int bucket = hash % h->nbuckets;
+
+    Entry *current = h->buckets[bucket];
+    while (current != NULL) {
+        if (strcmp(current->key, key) == 0){
+            for (int i = 0; i < current->vals.count; i++){
+                if (current->vals.ids[i] == solutionId) {
+                        return 1;
+                }
+            }
+        }
+        current = current->next;
+    }
     return 0;
 }
 
 /* TODO 25 */
 int *h_get_ids(const Hash *h, const char *key, int *outCount) {
+    if (outCount == NULL) {
+        return NULL;
+    }
+    *outCount = 0;
+
+    if (h == NULL || key == NULL || h->buckets == NULL || h->nbuckets <= 0) {
+        return NULL;
+    }
+
+    unsigned hash = h_hash(key);
+    int bucket = hash % h->nbuckets;
+
+    Entry *current = h->buckets[bucket];
+    while (current != NULL) {
+        if (strcmp(current->key, key) == 0) {
+            if (current->vals.count == 0) {
+                return NULL;
+            }
+
+            int *copy = malloc(current->vals.count * sizeof(int));
+            if (copy == NULL) {
+                return NULL;
+            }
+
+            for (int i = 0; i < current->vals.count; i++) {
+                copy[i] = current->vals.ids[i];
+            }
+
+            *outCount = current->vals.count;
+            return copy;
+        }
+
+        current = current->next;
+    }
     *outCount = 0;
     return NULL;
 }
 
 /* TODO 26 */
 void h_free(Hash *h) {
+    if (h == NULL || h->buckets == NULL) {
+        return;
+    }
+
+    for (int i = 0; i < h->nbuckets; i++) {
+        Entry *current = h->buckets[i];
+        while (current != NULL) {
+            Entry *next = current->next;
+            free(current->key);
+            free(current->vals.ids);
+            free(current);
+            current = next;
+        }
+    }
+
+    free(h->buckets);
+    h->buckets = NULL;
+    h->nbuckets = 0;
+    h->size = 0;
+
 }
