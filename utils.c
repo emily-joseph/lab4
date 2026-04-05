@@ -15,7 +15,41 @@ extern Node *g_root;
  * Return 1 if valid, 0 if any violation is found.
  * ---------------------------------------------------------------- */
 int check_integrity(void) {
-    return 1;
+    Queue* q = malloc(sizeof(Queue));
+    if (q == NULL) {
+        return 0;
+    }
+    q_init(q);
+    q_enqueue(q, g_root, 0);
+
+    uint32_t currId = 0;
+    while (!q_empty(q)) {
+        Node* curr;
+        int id;
+
+        if (q_dequeue(q, &curr, &id) == 0) {
+            q_free(q);
+            return 0;
+            //fail
+        }
+        if (curr->isQuestion == 1) { //question
+            if (curr->yes == NULL || curr->no == NULL) {
+                return 0;
+            }
+        } else { //answer
+            if (curr->yes != NULL || curr->no != NULL) {
+                return 0;
+            }
+        }
+        if (curr->yes != NULL) {
+            currId++;
+            q_enqueue(q, curr->yes, currId);
+        }
+        if (curr->no != NULL) {
+            currId++;
+            q_enqueue(q, curr->no, currId);
+        }
+    }
 }
 
 /* ----------------------------------------------------------------
