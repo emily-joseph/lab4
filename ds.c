@@ -48,7 +48,6 @@ void free_tree(Node *node) {
 int count_nodes(Node *root) {
     if (root == NULL) return 0;
     return 1 + count_nodes(root->yes) + count_nodes(root->no);
-    
 }
 
 
