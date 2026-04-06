@@ -15,6 +15,7 @@ extern Node *g_root;
  * Return 1 if valid, 0 if any violation is found.
  * ---------------------------------------------------------------- */
 int check_integrity(void) {
+    
     Queue* q = malloc(sizeof(Queue));
     if (q == NULL) {
         return 0;
@@ -35,10 +36,14 @@ int check_integrity(void) {
         }
         if (curr->isQuestion == 1) { //question
             if (curr->yes == NULL || curr->no == NULL) {
+                q_free(q);
+                free(q);
                 return 0;
             }
         } else { //answer
             if (curr->yes != NULL || curr->no != NULL) {
+                q_free(q);
+                free(q);
                 return 0;
             }
         }
@@ -51,6 +56,8 @@ int check_integrity(void) {
             q_enqueue(q, curr->no, currId);
         }
     }
+    q_free(q);
+    free(q);
     return 1;
 }
 
@@ -89,8 +96,8 @@ void find_shortest_path(const char *sol1, const char *sol2) {
 
     typedef struct {
         Node *node;
-        int32_t pId;          //will use -1 for root
-        int32_t branch;  //-1 root, 1 yes, 0 no
+        int32_t pId; //will use -1 for root
+        int32_t branch; //-1 root, 1 yes, 0 no
     } PathNode;
 
     PathNode *arr = calloc(nodeCount, sizeof(PathNode));
@@ -107,11 +114,13 @@ void find_shortest_path(const char *sol1, const char *sol2) {
         refresh();
         return;
     }
-    q_init(q);
-    int32_t found1 = -1;
-    int32_t found2 = -1;
-    uint32_t nextId = 0;
 
+    q_init(q);
+    int32_t found1 = -1; //-1 menas not found yet
+    int32_t found2 = -1;
+    uint32_t nextId = 0; //for putting nodes in queue
+
+    //set up the root
     arr[0].node = g_root;
     arr[0].pId = -1;
     arr[0].branch = -1;
@@ -169,7 +178,7 @@ void find_shortest_path(const char *sol1, const char *sol2) {
 
     //now lets build ancestor array
 
-    PathNode* a1 = malloc(nodeCount * sizeof(PathNode));
+    PathNode* a1 = calloc(nodeCount, sizeof(PathNode));
     if (a1 == NULL) {
         free(a1);
         free(arr);
@@ -177,7 +186,7 @@ void find_shortest_path(const char *sol1, const char *sol2) {
         refresh();
         return;
     }
-    PathNode* a2 = malloc(nodeCount * sizeof(PathNode));
+    PathNode* a2 = calloc(nodeCount, sizeof(PathNode));
     if (a2 == NULL) {
         free(a1);
         free(a2);
@@ -204,18 +213,104 @@ void find_shortest_path(const char *sol1, const char *sol2) {
         currId = arr[currId].pId;
     }
 
+    //save the lengths for traversal
+    int32_t len1 = l1;
+    int32_t len2 = l2;
+
     l1--; //addr of root node
     l2--;
     PathNode* lca = NULL;
 
-    while (l1 >= 0 && l2 >= 0 && a1[l1].node == a2[l2].node) {
+    while (l1 > -1 && l2 >-1 && a1[l1].node == a2[l2].node) {
         lca = &a1[l1]; //goes first so lca doesn't need to be changed after
         l1--;
-        l2--;
+        l2--; //l2 points to the first unique node
     }
 
     //JUST GOTTA FIGURE OUT PRINTING NOW
 
-    //mvprintw(10, 2, "find_shortest_path not yet implemented.");
-    //refresh();
+    //clear and mvprintw from internet
+    clear(); //from internet
+    int row = 2;
+    mvprintw(row, 2, "Printing solutions");
+    row++;
+    mvprintw(row, 4, "1) %s", sol1);
+    row++;
+    mvprintw(row, 4, "2) %s", sol2);
+    row++;
+
+    mvprintw(row, 2, "Shared path:");
+    row++;
+
+    //must start at end of a1 or a2 till lca
+
+    //get index of lca within a1 and a2
+    int32_t lcaIndex1 = -1;
+    for (int32_t i = 0; i < len1; i++) {
+        if (a1[i].node == lca->node) {
+            lcaIndex1 = i;
+            break;
+        }
+    }
+
+    int32_t lcaIndex2 = -1;
+    for (int32_t i = 0; i < len2; i++) {
+        if (a2[i].node == lca->node) {
+            lcaIndex2 = i;
+            break;
+        }
+    }
+
+    if (lcaIndex1 == -1 || lcaIndex2 == -1) {
+        mvprintw(row++, 2, "Error: can't trace path.");
+        refresh();
+        free(a1);
+        free(a2);
+        free(arr);
+        return;
+    }
+
+    //start at root not (index = len - 1) till the lca: SHARED PATH
+    for (int32_t i = len1-1; i > lcaIndex1; i--) {
+        if (a1[i].node->isQuestion == 1) {
+            mvprintw(row, 4, "%s", a1[i].node->text);
+            row++;
+        }
+    }
+
+
+    row++;
+    mvprintw(row, 2, "Divergence question:");
+    row++;
+    mvprintw(row, 4, "%s", a1[lcaIndex1].node->text);
+    row++;
+
+    PathNode* c1 = &a1[lcaIndex1-1]; //first unique node
+    PathNode* c2 = &a2[lcaIndex2-1];
+
+    char* yn = malloc(sizeof(char) * 4);
+    if (c1 != NULL) {
+        if (c1->branch == 1) {
+                yn = "YES";
+        } else {
+            yn = "NO";
+        }
+        mvprintw(row, 4, "%s -> %s", yn, sol1); //how to print multiple variables from google
+        row++;
+    }
+
+    if (c2 != NULL) {
+        if (c2->branch == 1) {
+                yn = "YES";
+        } else {
+            yn = "NO";
+        }
+        mvprintw(row, 4, "%s -> %s", yn, sol2); //how to print multiple variables from google
+        row++;
+    }
+
+    refresh();
+    free(a1);
+    free(a2);
+    free(arr);
 }

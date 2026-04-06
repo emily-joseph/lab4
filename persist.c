@@ -77,6 +77,7 @@ int save_tree(const char *filename) {
     Queue *q = malloc(sizeof(Queue)); //make queue for BFS
     if (q == NULL) {
         fclose(fp);
+        free(map);
         return 0;
     }
     q_init(q);
@@ -137,31 +138,47 @@ int save_tree(const char *filename) {
 
         if (fwrite(&isQuestion, sizeof(uint8_t), 1, fp) != 1) {
             fclose(fp);
+            q_free(q);
+            free(q);
+            free(map);
             return 0;
         } 
 
         if (fwrite(&textLen, sizeof(uint32_t), 1, fp) != 1) {
             fclose(fp);
+            q_free(q);
+            free(q);
+            free(map);
             return 0;
         } 
         
         if (fwrite(text, sizeof(char), textLen, fp) != textLen) {
             fclose(fp);
+            q_free(q);
+            free(q);
+            free(map);
             return 0;
         } 
 
         if (fwrite(&yesId, sizeof(int32_t), 1, fp) != 1) {
             fclose(fp);
+            q_free(q);
+            free(q);
+            free(map);
             return 0;
         } 
 
         if (fwrite(&noId, sizeof(int32_t), 1, fp) != 1) {
             fclose(fp);
+            q_free(q);
+            free(q);
+            free(map);
             return 0;
         } 
 
     }
     q_free(q);
+    free(q);
     fclose(fp);
     free(map);
     return 1;
@@ -177,140 +194,5 @@ int save_tree(const char *filename) {
  * Return 1 on success, 0 on any error (free partial allocations).
  * ---------------------------------------------------------------- */
 int load_tree(const char *filename) {
-    FILE *fp;
-    uint32_t magic;
-    uint32_t version;
-    uint32_t nodeCount;
-
-    if (filename == NULL) {
-        return 0;
-    }
-
-    fp = fopen(filename, "rb");
-    if (fp == NULL) {
-        return 0;
-    }
-
-    //get magic numebr, version, and nodeCount
-    if (fread(&magic, sizeof(uint32_t), 1, fp) != 1) {
-        goto fail;
-    }
-    if (fread(&version, sizeof(uint32_t), 1, fp) != 1) {
-        goto fail;
-    }
-    if (fread(&nodeCount, sizeof(uint32_t), 1, fp) != 1) {
-        goto fail;
-    }
-
-    if (nodeCount == 0) { //if for some reason node count doesnt match g_root
-        if (g_root != NULL) {
-            free_tree(g_root);
-        }
-        g_root = NULL;
-        fclose(fp);
-        return 1;
-    }
-
-    Node **nodes = calloc(nodeCount, sizeof(Node *));
-    int32_t *yesIds = malloc(nodeCount * sizeof(int32_t)); //this will hold addr into nodes of the yes
-    int32_t *noIds  = malloc(nodeCount * sizeof(int32_t)); //same for no (so we can use this like nodes[noIds[blah]])
-    if (nodes == NULL || yesIds == NULL || noIds == NULL) {
-        goto fail;
-    }
-
-    for (uint32_t i = 0; i < nodeCount; i++) {
-        uint8_t isQuestion;
-        uint32_t textLen;
-        char *text = NULL;
-        Node *node = NULL;
-        if (fread(&isQuestion, sizeof(uint8_t), 1, fp) != 1) {
-            goto fail;
-        }
-        if (fread(&textLen, sizeof(uint32_t), 1, fp) != 1) {
-            goto fail;
-        }
-        text = malloc((textLen+1) * sizeof(char)); // add space for null char
-        if (text == NULL){
-            goto fail;
-        }
-        
-        if (textLen > 0) {
-            if (fread(text, sizeof(char), textLen, fp) != textLen) {
-                free(text);
-                goto fail;
-            }
-        }
-        text[textLen] = 0;
-
-
-        if (fread(&yesIds[i], sizeof(int32_t), 1, fp) != 1) {
-            free(text);
-            goto fail;
-        }
-        if (fread(&noIds[i], sizeof(int32_t), 1, fp) != 1) {
-            free(text);
-            goto fail;
-        }
-        if (isQuestion == 1) {
-            node = create_question_node(text); // only yes and no needs to be set up now
-            if (node == NULL) {
-                free(text);
-                goto fail;
-            }
-        } else { // assume it's always 0 or 1
-            node = create_solution_node(text);
-            if (node == NULL) {
-                free(text);
-                goto fail;
-            }
-        }
-
-        free(text); // not needed anymore
-
-        //now we can put this new made node into our array
-        nodes[i] = node;
-
-    }
-
-    //now let's acc rebuild the array
-    for (uint32_t i = 0; i < nodeCount; i++) {
-        if (yesIds[i] != -1) {
-            nodes[i]->yes = nodes[yesIds[i]];
-        } else {
-            nodes[i]->yes = NULL;
-        }
-        if (noIds[i] != -1) {
-            nodes[i]->no = nodes[noIds[i]];
-        } else {
-            nodes[i]->no = NULL;
-        }
-    }
-
-    //takeout whatever was there before
-    if (g_root != NULL) {
-        free_tree(g_root);
-    }
-
-    g_root = nodes[0]; //root will always be the first node in array
-
-    free(nodes);
-    free(yesIds);
-    free(noIds);
-    fclose(fp);
-    return 1;
-
-    fail:
-    if (nodes != NULL) {
-        for (uint32_t i = 0; i < nodeCount; i++) {
-            if (nodes[i] != NULL) {
-                free(nodes[i]->text);
-                free(nodes[i]);
-            }
-        }
-    }
-    free(nodes);
-    free(yesIds);
-    free(noIds);
-    fclose(fp);
     return 0;
 }

@@ -399,26 +399,12 @@ int *h_get_ids(const Hash *h, const char *key, int *outCount) {
     Entry *current = h->buckets[bucket];
     while (current != NULL) {
         if (strcmp(current->key, key) == 0) {
-            if (current->vals.count == 0) {
-                return NULL;
-            }
-
-            int *copy = malloc(current->vals.count * sizeof(int));
-            if (copy == NULL) {
-                return NULL;
-            }
-
-            for (int i = 0; i < current->vals.count; i++) {
-                copy[i] = current->vals.ids[i];
-            }
-
             *outCount = current->vals.count;
-            return copy;
+            return current->vals.ids;
         }
-
         current = current->next;
     }
-    *outCount = 0;
+    
     return NULL;
 }
 
