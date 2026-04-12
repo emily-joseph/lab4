@@ -1,8 +1,8 @@
 # ECE 312 Lab 4 Write-Up: Tech Support Diagnosis Tool
 
-**Name:** [Your Name]
-**EID:** [Your EID]
-**Date:** [Submission Date]
+**Name:** Emily Joseph
+**EID:** ej7887
+**Date:** 4/12/2025
 
 ---
 

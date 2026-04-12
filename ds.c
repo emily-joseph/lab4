@@ -157,7 +157,19 @@ void es_free(EditStack *s) {
     s->capacity = 0;
 }
 
-void free_edit_stack(EditStack *s) { es_free(s); }
+void free_edit_stack(EditStack *s) {
+    if (s == &g_redo) { // we need to free the Edits that are not in the tree anymore (freed from free tree)
+        for (int i = 0; i < s->size; i++) {
+            Edit *e = &s->edits[i];
+            free(e->newQuestion->text);
+            free(e->newQuestion);
+            free(e->newLeaf->text);
+            free(e->newLeaf);
+        }
+    }
+    es_free(s);
+
+}
 
 
 /* ====== Queue  (linked list, BFS) ============================== */
@@ -225,7 +237,6 @@ void q_free(Queue *q) {
     q->size = 0;
 
 }
-
 
 /* ====== Hash table  (separate chaining) ======================== */
 

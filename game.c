@@ -109,20 +109,20 @@ void run_diagnosis(void) {
             char newSolution[800];
             char newQuestion[800];
             
-            //get the solution
-            tmp = get_input(10, 2, "What would fix this problem? ");
+            // Get the solution
+            mvprintw(10, 2, "What would fix this problem?");
+            tmp = get_input(11, 4, "> ");
             strncpy(newSolution, tmp, sizeof(newSolution) - 1);
             newSolution[sizeof(newSolution) - 1] = '\0';
 
-            //get question
-            char prompt[800];
-            snprintf(prompt, sizeof(prompt), "Give me a yes/no question that distinguishes your problem from \"%s\": ", curr->text); //online
-            tmp = get_input(12, 2, prompt);
+            // Get the problem
+            mvprintw(13, 2, "Give me a yes/no question that distinguishes your problem");
+            mvprintw(14, 2, "from: \"%s\"", curr->text);
+            tmp = get_input(16, 4, "> ");
             strncpy(newQuestion, tmp, sizeof(newQuestion) - 1);
             newQuestion[sizeof(newQuestion) - 1] = '\0';
 
-            //get connection (yes or no child)
-            int userAns = get_yes_no(14, 2, "For your problem, is the answer yes or no? (y/n):");
+            int userAns = get_yes_no(17, 2, "For your problem, is the answer yes or no? (y/n): ");
 
             Node *newQ    = create_question_node(newQuestion);
             Node *newLeaf = create_solution_node(newSolution);
@@ -172,7 +172,7 @@ void run_diagnosis(void) {
             free(canon);
 
             attron(COLOR_PAIR(3));
-            mvprintw(16, 2, "Thanks! I'll remember that.");
+            mvprintw(20, 2, "Thanks! I'll remember that.");
             attroff(COLOR_PAIR(3));
             refresh();
             napms(1500); // online
