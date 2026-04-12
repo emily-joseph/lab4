@@ -184,6 +184,7 @@ void test_integrity(void) {
     Node *saved = g_root; g_root = root;
     assert(check_integrity());
 
+    free_tree(root->no);
     root->no = NULL;
     assert(!check_integrity());
 

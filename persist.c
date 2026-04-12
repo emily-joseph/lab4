@@ -228,9 +228,15 @@ int load_tree(const char *filename) {
         return 1;
     }
 
-    Node **nodes = calloc(nodeCount, sizeof(Node *));
-    int32_t *yesIds = malloc(nodeCount * sizeof(int32_t)); //this will hold addr into nodes of the yes
-    int32_t *noIds  = malloc(nodeCount * sizeof(int32_t)); //same for no (so we can use this like nodes[noIds[blah]])
+    Node **nodes = NULL;
+    int32_t *yesIds = NULL;
+    int32_t *noIds  = NULL;
+
+
+    nodes  = calloc(nodeCount, sizeof(Node *));
+    yesIds = malloc(nodeCount * sizeof(int32_t));
+    noIds  = malloc(nodeCount * sizeof(int32_t));
+    
     if (nodes == NULL || yesIds == NULL || noIds == NULL) {
         goto fail;
     }
@@ -317,16 +323,17 @@ int load_tree(const char *filename) {
     return 1;
 
     fail:
-    if (nodes != NULL) {
-        for (uint32_t i = 0; i < nodeCount; i++) {
-            if (nodes[i] != NULL) {
-                free(nodes[i]->text);
-                free(nodes[i]);
+        if (nodes != NULL) {
+            for (uint32_t i = 0; i < nodeCount; i++) {
+                if (nodes[i] != NULL) {
+                    free(nodes[i]->text);
+                    free(nodes[i]);
+                }
             }
         }
-    }
-    free(nodes);
-    free(yesIds);
-    free(noIds);
-    fclose(fp);
+        free(nodes);
+        free(yesIds);
+        free(noIds);
+        fclose(fp);
+        return 0;
 }
