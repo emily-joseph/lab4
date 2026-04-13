@@ -69,7 +69,7 @@ void fs_push(FrameStack *s, Node *node, int answeredYes) {
     if (s->capacity <= s->size){
         s->capacity = (s->capacity)*2;
         Frame* temp = realloc(s->frames, sizeof(Frame)*(s->capacity));
-        if (s->frames == NULL) {
+        if (temp == NULL) {
             return;
         }
         s->frames = temp;
