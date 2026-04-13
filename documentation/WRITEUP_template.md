@@ -57,13 +57,17 @@ Candidate topics:
 Show the reasoning, not just the answer.
 
 ### 2.1 — Amortized cost of a single FrameStack push
+When the size is less than capacity, all that has to happen is putting the new node at the right position, updating its answered yes, and incrementing the size which is O(1). When the size is not less than the capacity, then you need to resize the entire FrameStack. In this case the size is multiplied by 2 and realloc copies all existing elements which is O(n). As pushes occur capacity grows like 1 to 2 to 4 to 8... so if you do n pushes, resizing will happen about log base 2 (n) times. Spreading the O(n) copy cost across the n pushes gives O(n)/n = O(1) amortized per push.
 
 ### 2.2 — Hash table average-case lookup
+The first thing that happens for a lookup is the hash is computed which iterates over every character in the key. If k is the key length then computing the hash is O(k). Then we find the bucket using bucket = hash % h->nbuckets which is just O(1). Next we iterate through all the entries in the current bucket. This really depends on how many keys end up in the bucket which depends, but if we account for the fact that the number of buckets is fixed at 31 and based on the lab requirements we have around 25 nodes, we can estimate that this averages O(1) which is found by dividing the number of keys by the number of buckets. This means the average-case lookup is around O(k) which is about O(1).
 
 ### 2.3 — Diagnosis traversal (best, worst, average)
+The tree starts with a single question and two solution leaves. The diagnose traversal goes through every node from root to leaf (the solution). The best case is that the tree has only the initial question and the two solution leaves, so the path is always exactly two nodes. The worst case is that if a tree has a height h, the diagnosis traversal has to go through the longest path from root to leaf which is O(h). If there are n nodes, then the maximum possible height (h) would be n-1 where every new problem was appended to the same branch. Now the average case would be in the case of a balanced tree where each question splits the candidates roughly in half. This would be O(log n).
+
 
 ### 2.4 — `find_shortest_path` time and space
-
+First off find_shortest_path needs to build the PathNode array by going through every node in the tree till it finds both solutions. If we assume that you must go through every node to find both solutions this is O(n). Then it builds the two ancestor list arrays that walk from root to end which is O(h) for each h (height). Then to find the LCA, we traverse from the root to the end which is also O(h). This makes the total time O(n). As for space, the first thing we built is the PathNodes array which I set allocated enough space to have a PathNode for every node in the tree. Then each of the ancestor arrays holds a node in each level from the root to the leaf. This gives us O(n) overall for space.
 ---
 
 ## Section 3 — Bugs (two required)
