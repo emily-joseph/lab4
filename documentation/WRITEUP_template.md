@@ -32,23 +32,23 @@ Candidate topics:
 - Ownership model for nodes in undo/redo — why not free on undo?
 - Iterative diagnosis loop — what state did you have to track explicitly?
 
-### 1.A — [Component]
+### 1.A — [Two-pass design in `load_tree`]
 
-*What I chose:* [1–2 sentences]
+*What I chose:* I chose to read all the nodes into a nodes array, with two other integer arrays holding the yesIds and noIds. Then in the second pass I linked the children by ID.
 
-*What I considered instead:* [1 sentence]
+*What I considered instead:* I considered linking the children in the first pass itself.
 
-*Why:* [2–4 sentences — be specific]
+*Why:* Since we saved the tree is BFS order, the children of a node won't appear before the parent. This means once we are loading a specific node, in order to link its right and left child we would have to continue to traverse the tree nodes. This meant that using a two-pass design solved that problem because after the first pass, all the nodes in the tree had been stored in the nodes array. In the second pass we could safely link the children of each node by using nodes[i]->yes = nodes[yesIds[i]] (and similarly for no) and will know if a yes or no child exists.
 
 ---
 
-### 1.B — [Component]
+### 1.B — [Ownership model for nodes in undo/redo]
 
-*What I chose:* [1–2 sentences]
+*What I chose:* I chose to not free the newQuestion and newLeaf on undo and instead putting them on the redo stack with the children still linked.
 
-*What I considered instead:* [1 sentence]
+*What I considered instead:* Freeing the nodes on undo and building them again on redo.
 
-*Why:* [2–4 sentences]
+*Why:* If I had freed the newQuestion and newLeaf on undo, redo wouldn't be able restore it since it doesn't know what the new question or solution was and would have to ask the user for the input again (defeating the whole purpose). By keeping the nodes alive on the redo stack, to perform a redo all I have to do is swap the pointers so that the parent is point to the new question. This does mean that the detatched nodes need to be specifically freed when the redo stack is cleared in a new learning session or when the program exits.
 
 ---
 
